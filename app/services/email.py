@@ -4,7 +4,7 @@ from email.message import EmailMessage
 from app.config import SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FROM
 
 
-FRONTEND_URL = "https://sanityrc.com"
+from app.cofig import SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FROM, FRONTEND_URL
 
 
 def send_email(to_email: str, subject: str, text: str, html: str):
