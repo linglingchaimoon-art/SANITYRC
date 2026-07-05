@@ -9,8 +9,16 @@ from app.config import SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FRO
 
 def send_email(to_email: str, subject: str, text: str, html: str):
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASSWORD:
-        print("EMAIL NOT SENT: SMTP is not configured")
+        print("EMAIL NOT SENT: SMTP not configured")
+        print("SMTP_HOST:", SMTP_HOST)
+        print("SMTP_USER:", SMTP_USER)
         return False
+
+    print("SMTP CONNECTING...")
+    print("TO:", to_email)
+    print("SMTP_HOST:", SMTP_HOST)
+    print("SMTP_PORT:", SMTP_PORT)
+    print("FROM:", EMAIL_FROM)
 
     msg = EmailMessage()
     msg["Subject"] = subject
@@ -20,13 +28,23 @@ def send_email(to_email: str, subject: str, text: str, html: str):
     msg.set_content(text)
     msg.add_alternative(html, subtype="html")
 
-    with smtplib.SMTP(SMTP_HOST, int(SMTP_PORT), timeout=10) as smtp:
-        smtp.starttls()
-        smtp.login(SMTP_USER, SMTP_PASSWORD)
-        smtp.send_message(msg)
+    try:
+        with smtplib.SMTP(SMTP_HOST, int(SMTP_PORT), timeout=15) as smtp:
+            print("SMTP STARTTLS...")
+            smtp.starttls()
 
-    print(f"EMAIL SENT TO: {to_email}")
-    return True
+            print("SMTP LOGIN...")
+            smtp.login(SMTP_USER, SMTP_PASSWORD)
+
+            print("SMTP SEND...")
+            smtp.send_message(msg)
+
+        print(f"EMAIL SENT TO: {to_email}")
+        return True
+
+    except Exception as e:
+        print("EMAIL ERROR:", repr(e))
+        return False
 
 
 def send_license_email(to_email: str, license_key: str):
