@@ -74,3 +74,13 @@ def get_waitlist(db: Session = Depends(get_db)):
         }
         for entry in entries
     ]
+
+@router.get("/test-email")
+def test_waitlist_email():
+    send_waitlist_email("phatjec@icloud.com")
+    send_owner_waitlist_notification("phatjec@icloud.com", "xmrtj")
+
+    return {
+        "success": True,
+        "message": "Test waitlist emails sent"
+    }
