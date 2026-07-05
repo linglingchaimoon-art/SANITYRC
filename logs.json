@@ -1,0 +1,290 @@
+[
+    {
+        "time": "2026-07-03T21:06:06.922313+00:00",
+        "action": "restart",
+        "success": true,
+        "message": "Server restart/start requested"
+    },
+    {
+        "time": "2026-07-03T22:08:23.848922+00:00",
+        "action": "restart",
+        "success": true,
+        "message": "Server restart/start requested"
+    },
+    {
+        "time": "2026-07-03T22:58:54.227296+00:00",
+        "action": "restart",
+        "success": true,
+        "message": "Server restart/start requested"
+    },
+    {
+        "time": "2026-07-03T23:06:31.681603+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "restart",
+        "success": true,
+        "message": "Restarted the Rust Console server"
+    },
+    {
+        "time": "2026-07-03T23:11:51.463853+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "restart",
+        "success": true,
+        "message": "Restarted the Rust Console server"
+    },
+    {
+        "time": "2026-07-03T23:30:57.602874+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "restart",
+        "success": true,
+        "message": "Restarted the Rust Console server"
+    },
+    {
+        "time": "2026-07-03T23:54:29.525137+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Executed command: status"
+    },
+    {
+        "time": "2026-07-03T23:55:04.024598+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Executed command: status"
+    },
+    {
+        "time": "2026-07-03T23:55:33.904277+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Executed command: global.say hello world"
+    },
+    {
+        "time": "2026-07-04T01:23:46.097333+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Executed command: save"
+    },
+    {
+        "time": "2026-07-04T01:24:06.526346+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "restart",
+        "success": true,
+        "message": "Restarted the Rust Console server"
+    },
+    {
+        "time": "2026-07-04T01:24:16.592499+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Executed command: spawn supply_drop"
+    },
+    {
+        "time": "2026-07-04T01:50:05.378824+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "restart",
+        "success": true,
+        "message": "Restarted the Rust Console server"
+    },
+    {
+        "time": "2026-07-04T02:47:56.655248+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: say Hello from SANITY2X!"
+    },
+    {
+        "time": "2026-07-04T02:50:05.375311+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: say Hello from SANITY2X!"
+    },
+    {
+        "time": "2026-07-04T02:53:05.517321+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T02:53:27.285914+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: status"
+    },
+    {
+        "time": "2026-07-04T02:53:47.350845+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: save"
+    },
+    {
+        "time": "2026-07-04T02:55:23.402490+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T02:56:26.400876+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: global.status"
+    },
+    {
+        "time": "2026-07-04T02:56:59.457632+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T02:57:06.849696+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: save"
+    },
+    {
+        "time": "2026-07-04T02:57:07.615761+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: save"
+    },
+    {
+        "time": "2026-07-04T02:57:26.270120+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: server.writecfg"
+    },
+    {
+        "time": "2026-07-04T02:58:25.759733+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: hey"
+    },
+    {
+        "time": "2026-07-04T03:00:14.172747+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T03:01:19.302424+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T03:03:22.554608+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T03:04:29.136168+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: save"
+    },
+    {
+        "time": "2026-07-04T03:17:09.956927+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "start",
+        "success": true,
+        "message": "Started the Rust Console server"
+    },
+    {
+        "time": "2026-07-04T06:15:50.034927+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: hello"
+    },
+    {
+        "time": "2026-07-04T06:16:00.794672+00:00",
+        "category": "console",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "command",
+        "success": true,
+        "message": "Sent command: players"
+    },
+    {
+        "time": "2026-07-04T23:18:32.589150+00:00",
+        "category": "server",
+        "role": "Owner",
+        "admin": "TJ",
+        "action": "restart",
+        "success": true,
+        "message": "Restarted the Rust Console server"
+    }
+]
