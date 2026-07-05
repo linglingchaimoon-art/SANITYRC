@@ -54,3 +54,16 @@ class Waitlist(Base):
     email = Column(String, unique=True, index=True)
     discord = Column(String, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+class ConnectedServer(Base):
+    tablename = "connected_servers"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, index=True)
+
+    server_name = Column(String)
+    service_id = Column(String)
+    nitrado_token_encrypted = Column(String)
+
+    connected = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
