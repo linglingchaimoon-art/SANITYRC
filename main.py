@@ -22,7 +22,7 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:5173",
         "https://sanityrc.com",
-        "https://www.sanity2x.com",
+        "https://www.sanityrc.com",
         "https://sanityrc-panel.vercel.app",
     ],
     allow_credentials=True,
