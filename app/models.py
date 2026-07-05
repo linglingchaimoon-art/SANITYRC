@@ -56,7 +56,7 @@ class Waitlist(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 class ConnectedServer(Base):
-    tablename = "connected_servers"
+    __tablename__ = "connected_servers"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True)
