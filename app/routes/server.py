@@ -4,6 +4,10 @@ from app.config import PRIVATE_API_KEY, SERVICE_ID
 from app.services.nitrado import nitrado_request
 from app.services.logger import save_log
 
+
+from pydantic import BaseModel
+from app.services.nitrado import send_command
+
 router = APIRouter(prefix="/nitrado")
 
 
@@ -15,6 +19,8 @@ def check_key(x_api_key: str):
 CURRENT_ADMIN = "TJ"
 CURRENT_ROLE = "Owner"
 
+class CommandRequest(BaseModel):
+    command: str
 
 @router.get("/server")
 def server_status(x_api_key: str = Header(alias="x-api-key")):
@@ -144,5 +150,32 @@ def get_services(x_api_key: str = Header(alias="x-api-key")):
         success=True,
         message="Viewed services list"
     )
-
     return response
+
+
+@router.post("/command")
+def send_server_command(
+    body: CommandRequest,
+    x_api_key: str = Header(alias="x-api-key"),
+):
+    check_key(x_api_key)
+
+    response = send_command(
+        SERVICE_ID,
+        body.command,
+    )
+
+    save_log(
+        category="console",
+        role=CURRENT_ROLE,
+        admin=CURRENT_ADMIN,
+        action="command",
+        success=True,
+        message=f"Executed command: {body.command}",
+    )
+
+    return {
+        "success": True,
+        "message": "Command sent successfully.",
+        "response": response,
+    }
