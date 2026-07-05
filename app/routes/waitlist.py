@@ -84,3 +84,15 @@ def test_waitlist_email():
         "success": True,
         "message": "Test waitlist emails sent"
     }
+
+@router.delete("/delete")
+def delete_waitlist_email(email: str, db: Session = Depends(get_db)):
+    entry = db.query(Waitlist).filter(Waitlist.email == email.lower().strip()).first()
+
+    if not entry:
+        raise HTTPException(status_code=404, detail="Email not found")
+
+    db.delete(entry)
+    db.commit()
+
+    return {"success": True, "message": f"{email} deleted from waitlist"}
