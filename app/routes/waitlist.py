@@ -34,3 +34,17 @@ def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
         "success": True,
         "message": "You joined the Sanity RC waitlist"
     }
+
+@router.get("/all")
+def get_waitlist(db: Session = Depends(get_db)):
+    entries = db.query(Waitlist).order_by(Waitlist.created_at.desc()).all()
+
+    return [
+        {
+            "id": entry.id,
+            "email": entry.email,
+            "discord": entry.discord,
+            "created_at": entry.created_at,
+        }
+        for entry in entries
+    ]
