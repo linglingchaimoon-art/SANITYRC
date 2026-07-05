@@ -21,7 +21,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173",
-        "https://sanity-rc-panel.vercel.app",
+        "https://sanityrc.com",
         "https://www.sanity2x.com",
         "https://sanityrc-panel.vercel.app",
     ],
