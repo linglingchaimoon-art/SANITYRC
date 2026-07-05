@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
+from fastapi import Header
+from app.config import ADMIN_API_KEY
 
 from app.database import get_db
 from app.models import Waitlist
@@ -16,6 +18,10 @@ class WaitlistRequest(BaseModel):
     email: EmailStr
     discord: str | None = None
 
+
+def verify_admin(x_admin_key: str | None = Header(default=None)):
+    if not ADMIN_API_KEY or x_admin_key != ADMIN_API_KEY:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 def send_waitlist_emails(email: str, discord: str | None):
     try:
@@ -62,7 +68,10 @@ def join_waitlist(
 
 
 @router.get("/all")
-def get_waitlist(db: Session = Depends(get_db)):
+def get_waitlist(
+    db : Session = Depends(get_db),
+    admin: None = Depends(verify_admin)
+):
     entries = db.query(Waitlist).order_by(Waitlist.created_at.desc()).all()
 
     return [
@@ -86,7 +95,11 @@ def test_waitlist_email():
     }
 
 @router.delete("/delete")
-def delete_waitlist_email(email: str, db: Session = Depends(get_db)):
+def delete_waitlist_email(
+    email: EmailStr,
+    db: Session = Depends(get_db),
+    admin: None = Depends(verify_admin),
+):
     entry = db.query(Waitlist).filter(Waitlist.email == email.lower().strip()).first()
 
     if not entry:
