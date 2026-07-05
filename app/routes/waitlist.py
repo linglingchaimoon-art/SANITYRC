@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -17,8 +17,24 @@ class WaitlistRequest(BaseModel):
     discord: str | None = None
 
 
+def send_waitlist_emails(email: str, discord: str | None):
+    try:
+        send_waitlist_email(email)
+    except Exception as e:
+        print("WAITLIST EMAIL FAILED:", str(e))
+
+    try:
+        send_owner_waitlist_notification(email, discord)
+    except Exception as e:
+        print("OWNER WAITLIST EMAIL FAILED:", str(e))
+
+
 @router.post("/join")
-def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
+def join_waitlist(
+    body: WaitlistRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
     email = body.email.lower().strip()
     discord = body.discord.strip() if body.discord else None
 
@@ -36,15 +52,7 @@ def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(entry)
 
-    try:
-        send_waitlist_email(email)
-    except Exception as e:
-        print("WAITLIST EMAIL FAILED:", str(e))
-
-    try:
-        send_owner_waitlist_notification(email, discord)
-    except Exception as e:
-        print("OWNER WAITLIST EMAIL FAILED:", str(e))
+    background_tasks.add_task(send_waitlist_emails, email, discord)
 
     return {
         "success": True,
