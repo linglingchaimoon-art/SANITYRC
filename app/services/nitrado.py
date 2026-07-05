@@ -69,6 +69,11 @@ def get_gameserver(server_id: str):
 # --------------------------------------------------
 
 def send_command(server_id: str, command: str):
+    return nitrado_request(
+        "POST",
+        f"/services/{server_id}/gameservers/command",
+        json={"command": command},
+    )
     """
     Sends any command to the gameserver.
 
