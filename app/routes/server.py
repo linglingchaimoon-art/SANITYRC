@@ -1,177 +1,220 @@
-from fastapi import APIRouter, Header, HTTPException
-
-from app.config import PRIVATE_API_KEY, SERVICE_ID
-from app.services.nitrado import nitrado_request
-from app.services.logger import save_log
-
-
+from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel
-from app.services.nitrado import send_command
+from sqlalchemy.orm import Session
+import requests
+
+from app.database import get_db
+from app.models import ConnectedServer, User
+from app.services.encryption import decrypt_value
+from app.services.security import decode_token
+from app.services.logger import save_log
 
 router = APIRouter(prefix="/nitrado")
 
 
-def check_key(x_api_key: str):
-    if x_api_key != PRIVATE_API_KEY:
-        raise HTTPException(401, "Invalid API key")
-
-
-CURRENT_ADMIN = "TJ"
-CURRENT_ROLE = "Owner"
-
 class CommandRequest(BaseModel):
     command: str
 
-@router.get("/server")
-def server_status(x_api_key: str = Header(alias="x-api-key")):
-    check_key(x_api_key)
 
-    response = nitrado_request(
+def get_current_user(
+    authorization: str = Header(default=None, alias="authorization"),
+    db: Session = Depends(get_db),
+):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Missing token")
+
+    try:
+        token = authorization.replace("Bearer ", "")
+        payload = decode_token(token)
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    user = db.query(User).filter(User.id == payload["user_id"]).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user
+
+
+def get_connected_server(db: Session, user: User):
+    server = (
+        db.query(ConnectedServer)
+        .filter(ConnectedServer.user_id == user.id)
+        .first()
+    )
+
+    if not server:
+        raise HTTPException(status_code=404, detail="No connected server found")
+
+    token = decrypt_value(server.nitrado_token_encrypted)
+
+    return server, token
+
+
+def nitrado_user_request(method: str, server_id: str, token: str, endpoint: str):
+    url = f"https://api.nitrado.net/services/{server_id}{endpoint}"
+
+    response = requests.request(
+        method,
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        },
+        timeout=30,
+    )
+
+    if response.status_code >= 400:
+        raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    try:
+        return response.json()
+    except Exception:
+        return {"success": True, "raw": response.text}
+
+
+@router.get("/server")
+def server_status(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    server, token = get_connected_server(db, user)
+
+    response = nitrado_user_request(
         "GET",
-        f"/services/{SERVICE_ID}/gameservers"
+        server.service_id,
+        token,
+        "/gameservers",
     )
 
     status = response["data"]["gameserver"]["status"]
 
     save_log(
         category="server",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
+        role=user.role,
+        admin=user.email,
         action="status",
         success=True,
-        message=f"Checked server status ({status})"
+        message=f"Checked server status ({status})",
     )
 
     return response
 
 
 @router.post("/start")
-def start_server(x_api_key: str = Header(alias="x-api-key")):
-    check_key(x_api_key)
+def start_server(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    server, token = get_connected_server(db, user)
 
-    response = nitrado_request(
+    response = nitrado_user_request(
         "POST",
-        f"/services/{SERVICE_ID}/gameservers/games/start?game=rustconsole"
+        server.service_id,
+        token,
+        "/gameservers/games/start?game=rustconsole",
     )
 
     save_log(
         category="server",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
+        role=user.role,
+        admin=user.email,
         action="start",
         success=True,
-        message="Started the Rust Console server"
+        message=f"Started server {server.server_name}",
     )
 
     return response
 
 
 @router.post("/stop")
-def stop_server(x_api_key: str = Header(alias="x-api-key")):
-    check_key(x_api_key)
+def stop_server(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    server, token = get_connected_server(db, user)
 
-    response = nitrado_request(
+    response = nitrado_user_request(
         "POST",
-        f"/services/{SERVICE_ID}/gameservers/games/stop"
+        server.service_id,
+        token,
+        "/gameservers/games/stop",
     )
 
     save_log(
         category="server",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
+        role=user.role,
+        admin=user.email,
         action="stop",
         success=True,
-        message="Stopped the Rust Console server"
+        message=f"Stopped server {server.server_name}",
     )
 
     return response
 
 
 @router.post("/restart")
-def restart_server(x_api_key: str = Header(alias="x-api-key")):
-    check_key(x_api_key)
+def restart_server(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    server, token = get_connected_server(db, user)
 
-    response = nitrado_request(
+    stop_response = nitrado_user_request(
         "POST",
-        f"/services/{SERVICE_ID}/gameservers/games/start?game=rustconsole"
+        server.service_id,
+        token,
+        "/gameservers/games/stop",
+    )
+
+    start_response = nitrado_user_request(
+        "POST",
+        server.service_id,
+        token,
+        "/gameservers/games/start?game=rustconsole",
     )
 
     save_log(
         category="server",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
+        role=user.role,
+        admin=user.email,
         action="restart",
         success=True,
-        message="Restarted the Rust Console server"
+        message=f"Restarted server {server.server_name}",
     )
 
     return {
         "status": "success",
         "message": "Restart requested",
-        "start": response
+        "stop": stop_response,
+        "start": start_response,
     }
-
-
-@router.get("/games")
-def get_games(x_api_key: str = Header(alias="x-api-key")):
-    check_key(x_api_key)
-
-    response = nitrado_request(
-        "GET",
-        f"/services/{SERVICE_ID}/gameservers/games"
-    )
-
-    save_log(
-        category="server",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
-        action="games",
-        success=True,
-        message="Viewed available games"
-    )
-
-    return response
-
-
-@router.get("/services")
-def get_services(x_api_key: str = Header(alias="x-api-key")):
-    check_key(x_api_key)
-
-    response = nitrado_request(
-        "GET",
-        "/services"
-    )
-
-    save_log(
-        category="server",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
-        action="services",
-        success=True,
-        message="Viewed services list"
-    )
-    return response
 
 
 @router.post("/command")
 def send_server_command(
     body: CommandRequest,
-    x_api_key: str = Header(alias="x-api-key"),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
 ):
-    check_key(x_api_key)
+    server, token = get_connected_server(db, user)
 
-    response = send_command(
-        SERVICE_ID,
-        body.command,
+    response = nitrado_user_request(
+        "POST",
+        server.service_id,
+        token,
+        "/gameservers/command",
     )
 
     save_log(
         category="console",
-        role=CURRENT_ROLE,
-        admin=CURRENT_ADMIN,
+        role=user.role,
+        admin=user.email,
         action="command",
         success=True,
-        message=f"Executed command: {body.command}",
+        message=f"Command requested: {body.command}",
     )
 
     return {
