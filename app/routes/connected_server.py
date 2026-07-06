@@ -7,6 +7,9 @@ from app.models import ConnectedServer, User
 from app.services.encryption import encrypt_value
 from app.services.security import decode_token
 
+
+import requests
+
 router = APIRouter(prefix="/servers", tags=["Servers"])
 
 
@@ -43,6 +46,29 @@ def connect_server(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    test_url = f"https://api.nitrado.net/services/{body.service_id}/gameservers"
+
+    test_res = requests.get(
+        test_url,
+        headers={
+            "Authorization": f"Bearer {body.nitrado_token}",
+            "Accept": "application/json",
+        },
+        timeout=20,
+    )
+
+    if test_res.status_code == 401:
+        raise HTTPException(status_code=401, detail="Invalid Nitrado API token")
+
+    if test_res.status_code == 404:
+        raise HTTPException(status_code=404, detail="Invalid Nitrado service ID")
+
+    if test_res.status_code >= 400:
+        raise HTTPException(
+            status_code=400,
+            detail="Could not verify Nitrado server connection",
+        )
+
     encrypted_token = encrypt_value(body.nitrado_token)
 
     existing = (
