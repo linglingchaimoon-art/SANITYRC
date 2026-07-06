@@ -18,7 +18,7 @@ class ConnectServerRequest(BaseModel):
 
 
 def get_current_user(
-    authorization: str = Header(None),
+    authorization: str = Header(default=None, alias="Authorization"),
     db: Session = Depends(get_db),
 ):
     if not authorization:
