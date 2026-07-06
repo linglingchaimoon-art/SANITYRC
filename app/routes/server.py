@@ -140,7 +140,7 @@ def stop_server(
         "POST",
         server.service_id,
         token,
-        "/gameservers/games/stop",
+        "/gameservers/stop",
     )
 
     save_log(
