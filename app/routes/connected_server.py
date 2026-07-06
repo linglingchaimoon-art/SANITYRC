@@ -1,14 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+import requests
 
 from app.database import get_db
 from app.models import ConnectedServer, User
-from app.services.encryption import encrypt_value
+from app.services.encryption import encrypt_value, decrypt_value
 from app.services.security import decode_token
-
-
-import requests
 
 router = APIRouter(prefix="/servers", tags=["Servers"])
 
@@ -38,6 +36,19 @@ def get_current_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     return user
+
+
+def get_user_connected_server(db: Session, user: User):
+    server = (
+        db.query(ConnectedServer)
+        .filter(ConnectedServer.user_id == user.id)
+        .first()
+    )
+
+    if not server:
+        raise HTTPException(status_code=404, detail="No connected server found")
+
+    return server
 
 
 @router.post("/connect")
@@ -82,13 +93,9 @@ def connect_server(
         existing.service_id = body.service_id
         existing.nitrado_token_encrypted = encrypted_token
         existing.connected = True
-
         db.commit()
 
-        return {
-            "success": True,
-            "message": "Server updated successfully.",
-        }
+        return {"success": True, "message": "Server updated successfully."}
 
     server = ConnectedServer(
         user_id=user.id,
@@ -101,10 +108,7 @@ def connect_server(
     db.add(server)
     db.commit()
 
-    return {
-        "success": True,
-        "message": "Server connected successfully.",
-    }
+    return {"success": True, "message": "Server connected successfully."}
 
 
 @router.get("/me")
@@ -119,10 +123,7 @@ def get_my_server(
     )
 
     if not server:
-        return {
-            "connected": False,
-            "server": None,
-        }
+        return {"connected": False, "server": None}
 
     return {
         "connected": server.connected,
@@ -136,19 +137,52 @@ def get_my_server(
     }
 
 
+@router.get("/status")
+def get_connected_server_status(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    server = get_user_connected_server(db, user)
+    token = decrypt_value(server.nitrado_token_encrypted)
+
+    url = f"https://api.nitrado.net/services/{server.service_id}/gameservers"
+
+    res = requests.get(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+        },
+        timeout=20,
+    )
+
+    if res.status_code >= 400:
+        raise HTTPException(
+            status_code=res.status_code,
+            detail="Could not fetch Nitrado server status",
+        )
+
+    data = res.json()
+    gameserver = data.get("data", {}).get("gameserver", {})
+
+    return {
+        "success": True,
+        "server_name": server.server_name,
+        "service_id": server.service_id,
+        "status": gameserver.get("status"),
+        "game": gameserver.get("game"),
+        "hostname": gameserver.get("hostname"),
+        "query": gameserver.get("query"),
+        "raw": gameserver,
+    }
+
+
 @router.delete("/disconnect")
 def disconnect_server(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    server = (
-        db.query(ConnectedServer)
-        .filter(ConnectedServer.user_id == user.id)
-        .first()
-    )
-
-    if not server:
-        raise HTTPException(status_code=404, detail="No connected server found")
+    server = get_user_connected_server(db, user)
 
     db.delete(server)
     db.commit()
