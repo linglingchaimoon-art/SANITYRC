@@ -6,6 +6,9 @@ from app.database import get_db
 from app.models import Report
 from app.config import PRIVATE_API_KEY
 
+from app.services.live import live_manager
+import asyncio
+
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
@@ -41,6 +44,14 @@ def create_report(
     db.add(report)
     db.commit()
     db.refresh(report)
+    
+    asyncio.create_task(
+        live_manager.broadcast({
+            "type": "report_created",
+            "message": f"New report submitted against {report.target_player}.",
+            "report_id": report.id,
+        })
+    )
 
     return {
         "success": True,
