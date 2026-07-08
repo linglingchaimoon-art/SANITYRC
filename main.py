@@ -15,6 +15,7 @@ from app.routes.paypal import router as paypal_router
 from app.routes.waitlist import router as waitlist_router
 from app.routes.connected_server import router as connected_server_router
 from app.routes.reports import router as reports_router
+from app.routes.rcon import router as rcon_router
 
 app = FastAPI(title="SANITY2X Private API")
 Base.metadata.create_all(bind=engine)
@@ -45,7 +46,7 @@ app.include_router(paypal_router)
 app.include_router(waitlist_router)
 app.include_router(connected_server_router)
 app.include_router(reports_router)
-
+app.include_router(rcon_router)
 
 
 
