@@ -26,7 +26,7 @@ def check_key(x_api_key: str):
 
 
 @router.post("/create")
-def create_report(
+async def create_report(
     body: ReportCreate,
     x_api_key: str = Header(alias="x-api-key"),
     db: Session = Depends(get_db),
@@ -45,13 +45,12 @@ def create_report(
     db.commit()
     db.refresh(report)
     
-    asyncio.create_task(
-        live_manager.broadcast({
-            "type": "report_created",
-            "message": f"New report submitted against {report.target_player}.",
-            "report_id": report.id,
+    await live_manager.broadcast({
+        "type": "report_created",
+        "message": f"New report submitted against {report.target_player}",
+        "report_id": report.id,
         })
-    )
+    
 
     return {
         "success": True,
