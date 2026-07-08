@@ -58,6 +58,10 @@ class Waitlist(Base):
 class ConnectedServer(Base):
     __tablename__ = "connected_servers"
 
+    rcon_ip = Column(String, nullable=True)
+    rcon_port = Column(Integer, nullable=True)
+    rcon_password_encrypted = Column(String, nullable=True)
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, index=True)
 
