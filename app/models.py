@@ -67,3 +67,18 @@ class ConnectedServer(Base):
 
     connected = Column(Boolean, default=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class Report(Base):
+    __tablename__ = "reports"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    server_name = Column(String, nullable=True)
+    reporter_discord = Column(String)
+    target_player = Column(String)
+    reason = Column(String)
+    evidence = Column(String, nullable=True)
+
+    status = Column(String, default="open")
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
