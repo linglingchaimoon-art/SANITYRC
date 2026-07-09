@@ -88,6 +88,7 @@ def invite_admin(
         claimed=False,
         claimed_by_user_id=None,
         plan="lifetime_admin",
+        created_at=datetime.now(timezone.utc),
     )
 
     db.add(license)
