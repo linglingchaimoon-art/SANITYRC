@@ -45,7 +45,10 @@ class User(Base):
     password_hash = Column(String)
     role = Column(String, default="Owner")
     active = Column(Boolean, default=True)
+    owner_user_id = Column(Integer, nullable=True) 
+    is_staff = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    
 
 class Waitlist(Base):
     __tablename__ = "waitlist"

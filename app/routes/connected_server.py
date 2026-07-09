@@ -12,182 +12,218 @@ router = APIRouter(prefix="/servers", tags=["Servers"])
 
 
 class ConnectServerRequest(BaseModel):
-    server_name: str
-    service_id: str
-    nitrado_token: str
+  server_name: str
+  service_id: str
+  nitrado_token: str
 
 
 def get_current_user(
-    authorization: str = Header(default=None, alias="authorization"),
-    db: Session = Depends(get_db),
+  authorization: str = Header(default=None, alias="authorization"),
+  db: Session = Depends(get_db),
 ):
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Missing token")
+  if not authorization:
+      raise HTTPException(status_code=401, detail="Missing token")
 
-    try:
-        token = authorization.replace("Bearer ", "")
-        payload = decode_token(token)
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid token")
+  try:
+      token = authorization.replace("Bearer ", "")
+      payload = decode_token(token)
+  except Exception:
+      raise HTTPException(status_code=401, detail="Invalid token")
 
-    user = db.query(User).filter(User.id == payload["user_id"]).first()
+  user = db.query(User).filter(User.id == payload["user_id"]).first()
 
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+  if not user:
+      raise HTTPException(status_code=404, detail="User not found")
 
-    return user
+  return user
+
+
+def get_server_owner_id(user: User):
+  return user.owner_user_id or user.id
+
+
+def user_is_owner(user: User):
+  return str(user.role).lower() == "owner"
 
 
 def get_user_connected_server(db: Session, user: User):
-    server = (
-        db.query(ConnectedServer)
-        .filter(ConnectedServer.user_id == user.id)
-        .first()
-    )
+  server_owner_id = get_server_owner_id(user)
 
-    if not server:
-        raise HTTPException(status_code=404, detail="No connected server found")
+  server = (
+      db.query(ConnectedServer)
+      .filter(ConnectedServer.user_id == server_owner_id)
+      .first()
+  )
 
-    return server
+  if not server:
+      raise HTTPException(status_code=404, detail="No connected server found")
+
+  return server
 
 
 @router.post("/connect")
 def connect_server(
-    body: ConnectServerRequest,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+  body: ConnectServerRequest,
+  db: Session = Depends(get_db),
+  user: User = Depends(get_current_user),
 ):
-    test_url = f"https://api.nitrado.net/services/{body.service_id}/gameservers"
+  if not user_is_owner(user):
+      raise HTTPException(
+          status_code=403,
+          detail="Only the owner can connect or replace the server token.",
+      )
 
-    test_res = requests.get(
-        test_url,
-        headers={
-            "Authorization": f"Bearer {body.nitrado_token}",
-            "Accept": "application/json",
-        },
-        timeout=20,
-    )
+  test_url = f"https://api.nitrado.net/services/{body.service_id}/gameservers"
 
-    if test_res.status_code == 401:
-        raise HTTPException(status_code=401, detail="Invalid Nitrado API token")
+  test_res = requests.get(
+      test_url,
+      headers={
+          "Authorization": f"Bearer {body.nitrado_token}",
+          "Accept": "application/json",
+      },
+      timeout=20,
+  )
 
-    if test_res.status_code == 404:
-        raise HTTPException(status_code=404, detail="Invalid Nitrado service ID")
+  if test_res.status_code == 401:
+      raise HTTPException(status_code=401, detail="Invalid Nitrado API token")
 
-    if test_res.status_code >= 400:
-        raise HTTPException(
-            status_code=400,
-            detail="Could not verify Nitrado server connection",
-        )
+  if test_res.status_code == 404:
+      raise HTTPException(status_code=404, detail="Invalid Nitrado service ID")
 
-    encrypted_token = encrypt_value(body.nitrado_token)
+  if test_res.status_code >= 400:
+      raise HTTPException(
+          status_code=400,
+          detail="Could not verify Nitrado server connection",
+      )
 
-    existing = (
-        db.query(ConnectedServer)
-        .filter(ConnectedServer.user_id == user.id)
-        .first()
-    )
+  encrypted_token = encrypt_value(body.nitrado_token)
 
-    if existing:
-        existing.server_name = body.server_name
-        existing.service_id = body.service_id
-        existing.nitrado_token_encrypted = encrypted_token
-        existing.connected = True
-        db.commit()
+  existing = (
+      db.query(ConnectedServer)
+      .filter(ConnectedServer.user_id == user.id)
+      .first()
+  )
 
-        return {"success": True, "message": "Server updated successfully."}
+  if existing:
+      existing.server_name = body.server_name
+      existing.service_id = body.service_id
+      existing.nitrado_token_encrypted = encrypted_token
+      existing.connected = True
+      db.commit()
 
-    server = ConnectedServer(
-        user_id=user.id,
-        server_name=body.server_name,
-        service_id=body.service_id,
-        nitrado_token_encrypted=encrypted_token,
-        connected=True,
-    )
+      return {
+          "success": True,
+          "message": "Server updated successfully.",
+      }
 
-    db.add(server)
-    db.commit()
+  server = ConnectedServer(
+      user_id=user.id,
+      server_name=body.server_name,
+      service_id=body.service_id,
+      nitrado_token_encrypted=encrypted_token,
+      connected=True,
+  )
 
-    return {"success": True, "message": "Server connected successfully."}
+  db.add(server)
+  db.commit()
+
+  return {
+      "success": True,
+      "message": "Server connected successfully.",
+  }
 
 
 @router.get("/me")
 def get_my_server(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+  db: Session = Depends(get_db),
+  user: User = Depends(get_current_user),
 ):
-    server = (
-        db.query(ConnectedServer)
-        .filter(ConnectedServer.user_id == user.id)
-        .first()
-    )
+  server_owner_id = get_server_owner_id(user)
 
-    if not server:
-        return {"connected": False, "server": None}
+  server = (
+      db.query(ConnectedServer)
+      .filter(ConnectedServer.user_id == server_owner_id)
+      .first()
+  )
 
-    return {
-        "connected": server.connected,
-        "server": {
-            "id": server.id,
-            "server_name": server.server_name,
-            "service_id": server.service_id,
-            "token_preview": "••••••••••••",
-            "created_at": server.created_at,
-        },
-    }
+  if not server:
+      return {
+          "connected": False,
+          "server": None,
+      }
+
+  return {
+      "connected": server.connected,
+      "server": {
+          "id": server.id,
+          "server_name": server.server_name,
+          "service_id": server.service_id,
+          "token_preview": "••••••••••••",
+          "created_at": server.created_at,
+          "shared_access": user.owner_user_id is not None,
+          "owner_user_id": server_owner_id,
+      },
+  }
 
 
 @router.get("/status")
 def get_connected_server_status(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+  db: Session = Depends(get_db),
+  user: User = Depends(get_current_user),
 ):
-    server = get_user_connected_server(db, user)
-    token = decrypt_value(server.nitrado_token_encrypted)
+  server = get_user_connected_server(db, user)
+  token = decrypt_value(server.nitrado_token_encrypted)
 
-    url = f"https://api.nitrado.net/services/{server.service_id}/gameservers"
+  url = f"https://api.nitrado.net/services/{server.service_id}/gameservers"
 
-    res = requests.get(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Accept": "application/json",
-        },
-        timeout=20,
-    )
+  res = requests.get(
+      url,
+      headers={
+          "Authorization": f"Bearer {token}",
+          "Accept": "application/json",
+      },
+      timeout=20,
+  )
 
-    if res.status_code >= 400:
-        raise HTTPException(
-            status_code=res.status_code,
-            detail="Could not fetch Nitrado server status",
-        )
+  if res.status_code >= 400:
+      raise HTTPException(
+          status_code=res.status_code,
+          detail="Could not fetch Nitrado server status",
+      )
 
-    data = res.json()
-    gameserver = data.get("data", {}).get("gameserver", {})
+  data = res.json()
+  gameserver = data.get("data", {}).get("gameserver", {})
 
-    return {
-        "success": True,
-        "server_name": server.server_name,
-        "service_id": server.service_id,
-        "status": gameserver.get("status"),
-        "game": gameserver.get("game"),
-        "hostname": gameserver.get("hostname"),
-        "query": gameserver.get("query"),
-        "raw": gameserver,
-    }
+  return {
+      "success": True,
+      "server_name": server.server_name,
+      "service_id": server.service_id,
+      "status": gameserver.get("status"),
+      "game": gameserver.get("game"),
+      "hostname": gameserver.get("hostname"),
+      "query": gameserver.get("query"),
+      "shared_access": user.owner_user_id is not None,
+      "raw": gameserver,
+  }
 
 
 @router.delete("/disconnect")
 def disconnect_server(
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+  db: Session = Depends(get_db),
+  user: User = Depends(get_current_user),
 ):
-    server = get_user_connected_server(db, user)
+  if not user_is_owner(user):
+      raise HTTPException(
+          status_code=403,
+          detail="Only the owner can disconnect the server.",
+      )
 
-    db.delete(server)
-    db.commit()
+  server = get_user_connected_server(db, user)
 
-    return {
-        "success": True,
-        "message": "Server disconnected successfully.",
-    }
+  db.delete(server)
+  db.commit()
+
+  return {
+      "success": True,
+      "message": "Server disconnected successfully.",
+  }
