@@ -82,11 +82,12 @@ def invite_admin(
 
     license = License(
         license_key=license_key,
+        owner=body.email,
+        role="Admin",
+        active=True,
+        claimed=False,
+        claimed_by_user_id=None,
         plan="lifetime_admin",
-        used=False,
-        user_id=None,
-        expires_at=None,
-        created_at=datetime.now(timezone.utc),
     )
 
     db.add(license)
