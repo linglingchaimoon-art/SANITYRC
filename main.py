@@ -19,6 +19,8 @@ from app.routes.reports import router as reports_router
 from app.routes.rcon import router as rcon_router
 from app.routes.live import router as live_router
 from app.routes.admin_invites import router as admin_invites_router
+from app.routes.team import router as team_router
+
 
 app = FastAPI(title="SANITY2X Private API")
 Base.metadata.create_all(bind=engine)
@@ -52,6 +54,7 @@ app.include_router(reports_router)
 app.include_router(rcon_router)
 app.include_router(live_router)
 app.include_router(admin_invites_router)
+app.include_router(team_router)
 
 
 
